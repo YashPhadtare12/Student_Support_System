@@ -235,6 +235,10 @@ def register_admin():
 @app.route('/admin/approvals')
 @admin_required
 def admin_approvals():
+    if session['username'] != 'admin':  # Only system admin can access
+        flash('Only system admin can access this page', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
     db = get_db()
     try:
         pending_admins = db.execute(
@@ -250,6 +254,10 @@ def admin_approvals():
 @app.route('/admin/approve/<int:user_id>')
 @admin_required
 def approve_admin(user_id):
+    if session['username'] != 'admin':  # Only system admin can approve
+        flash('Only system admin can approve admins', 'danger')
+        return redirect(url_for('admin_dashboard'))
+    
     db = get_db()
     try:
         db.execute(
@@ -375,7 +383,7 @@ def view_complaint(complaint_id):
     finally:
         db.close()
 
-# Admin routes
+# Admin dashboard route (only one definition)
 @app.route('/admin/dashboard')
 @admin_required
 def admin_dashboard():
@@ -393,13 +401,20 @@ def admin_dashboard():
             (session['user_id'],)
         ).fetchall()
         
+        # Always get pending admins count
         pending_admins_count = db.execute(
             'SELECT COUNT(*) as count FROM users WHERE role = "pending_admin"'
         ).fetchone()['count']
         
+        # Also get the actual pending admins list
+        pending_admins = db.execute(
+            'SELECT * FROM users WHERE role = "pending_admin"'
+        ).fetchall()
+        
         return render_template('admin/dashboard.html', 
                             complaints=complaints,
-                            pending_admins_count=pending_admins_count)
+                            pending_admins_count=pending_admins_count,
+                            pending_admins=pending_admins)
     except sqlite3.Error as e:
         flash(f'Error retrieving complaints: {str(e)}', 'danger')
         return redirect(url_for('home'))
