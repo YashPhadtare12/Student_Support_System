@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">Your Assigned Complaints</h2>
+        <div>
+            {% if session.username == 'admin' and pending_admins_count > 0 %}
+                <a href="{{ url_for('admin_approvals') }}" class="btn btn-primary">
+                    Pending Approvals <span class="badge bg-danger">{{ pending_admins_count }}</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        {% if session.username == 'admin' and pending_admins_count > 0 %}
+            <div class="alert alert-info">
+                <strong>Pending Admin Approvals:</strong>
+                There are {{ pending_admins_count }} admin requests waiting for approval.
+                <a href="{{ url_for('admin_approvals') }}">Review now</a>
+            </div>
+        {% endif %}
+        
+        {% if complaints %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Student</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        <tr>
+                            <td>{{ complaint.id }}</td>
+                            <td>{{ complaint.student_name }}</td>
+                            <td>{{ complaint.category|title }}</td>
+                            <td>{{ complaint.created_at[:10] }}</td>
+                            <td>
+                                <span class="badge badge-{{ complaint.status }}">
+                                    {{ complaint.status|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('admin_view_complaint', complaint_id=complaint.id) }}" class="btn">View</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>You don't have any assigned complaints.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
